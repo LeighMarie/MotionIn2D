@@ -53,6 +53,6 @@ input {
 #graph {
     position: absolute;
     top: 550px;
-    right: 700px;
+    right: 0px;
     margin-bottom: 20px; 
 }
