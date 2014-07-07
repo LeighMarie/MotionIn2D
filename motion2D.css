@@ -1,0 +1,58 @@
+.column {
+    display: inline-block;
+}
+
+#container {
+    border: 2px solid;
+}
+
+#first {
+    top: 10px;
+    position: absolute;
+    padding-left: 10px;
+}
+
+#second {
+    padding-top: 40px;
+}
+
+#third {
+    padding-top: 40px;
+    color: "green";
+}
+
+#fourth {
+    color: "blue";
+}
+
+.maybeAppear {
+    opacity: 0;
+}
+
+button {
+    padding: 5px;
+}
+
+.enter {
+    margin-left: 10px;
+}
+
+input {
+    margin-left: 2px;
+    padding: 4px;
+}
+
+.optionType{
+    margin-top: 10px;
+}
+
+.optionControl {
+    margin-top: 10px;
+}
+
+#graph {
+    position: absolute;
+    top: 550px;
+    right: 700px;
+    margin-bottom: 20px; 
+}

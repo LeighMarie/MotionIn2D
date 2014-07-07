@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<body>
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.2/raphael-min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<link rel="sylesheet" href="http://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.min.css" />
+    <link rel="stylesheet" href="motion2D.css" />
+    <script src="motion2D.js"></script>
+	<div id="container" class="column"></div>
+    <div class="column" id="first">
+        Motion Controls <div><button id="drag" class="optionControl">Manual (Drag)</button>
+                        <button id="auto" class="optionControl">Automatic</button></div>
+        <div id="legendV"> </div>  
+        <div id="legendA"> </div> 
+        <div id="second" class="maybeAppear"> 
+        Automatic Motion Options <div><button id="linear" class="optionType">Linear</button>
+                        <button id="harmonic" class="optionType">Harmonic</button>
+                        <button id="circular" class="optionType">Circular</button></div>
+                        <div id="extraOptions"> </div>
+        </div>
+        <div id="third" class="maybeAppear">
+            <font color = "green">Velocity: <b id="numVelocity"> </b>  </font>
+        </div>
+        <div id="fourth" class="maybeAppear">
+            <font color = "blue">Acceleration:  <b id="numAcceleration"> </b></font>
+        </div>
+    </div>
+    <div id="graph">
+       <canvas id="canvas" width="1000" height="600"></canvas>
+    </div>
+    </body>
