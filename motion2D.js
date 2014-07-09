@@ -3,7 +3,7 @@
 
 //variables global for access in all functions
 CONTAINER_WIDTH = 500;
-CONTAINER_HEIGHT = 400;
+CONTAINER_HEIGHT = 500;
 //distance particle can travel horizontally in linear and harmonic simulations
 var hDist = 400;
 var PARTICLE_SIZE = 20;
@@ -50,6 +50,8 @@ var flag = false;
 var xMax = 0;
 var first = true;
 var shift;
+var LEGEND_WIDTH = 36;
+var LEGEND_HEIGHT = 20;
 
 //clears the moving/changing components of the screen to prepare for the next simulation
 function refresh() {
@@ -91,6 +93,29 @@ function refresh() {
 function length(x1, y1, x2, y2) {
     return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 };
+
+//draws legend arrows
+function drawLegend(vLegend, aLegend) {
+    var legendVelVector = vLegend.path("M" + 5 + " " + 10 + "L" + (LEGEND_WIDTH - 10) + " " + 10);
+    var legendVelArrow = vLegend.path("M" + (LEGEND_WIDTH - 13)+ " " + 10 + "L" + (LEGEND_WIDTH-5)+ " " +   10);
+    legendVelArrow.attr({'arrow-end':'classic-wide-long', stroke:"black"});
+    vGroup = paper.set();
+    vGroup.push(
+        legendVelArrow,
+        legendVelVector
+    );
+    vGroup.attr({stroke:"green", 'stroke-width': 3});
+    var legendAccVector = aLegend.path("M" + 5 + " " + 10 + "L" + (LEGEND_WIDTH - 10) + " " + 10);
+    var legendAccArrow = aLegend.path("M" + (LEGEND_WIDTH - 13)+ " " + 10 + "L" + (LEGEND_WIDTH - 5)+ " " +10);
+    legendAccArrow.attr({'arrow-end':'classic-wide-long', stroke:"black"});
+    aGroup = paper.set();
+    aGroup.push(
+        legendAccVector,
+        legendAccArrow 
+    );
+    aGroup.attr({stroke:"black", 'stroke-width': 3});
+    legendAccVector.attr({stroke:"blue"});
+}
 
 //set-up for situation where particle moves in circle with radius chosen by the user
 function centripetalMotion(x, y, rad, color) {
@@ -166,13 +191,14 @@ function animateCentripetal() {
 //users can drag particle (with lag) to see how velocity and acceleration vectors change 
 //record changes in drag coordinates and call interval() if needed
 function animateDrag() {
+    drawLegend(velocityLegendDrag, accelerationLegendDrag);
     counter = 0;
     particle = paper.circle(50, 50, PARTICLE_SIZE, PARTICLE_SIZE).attr({
                stroke: "none",
                fill: "red"
     });
     
-    //mx is mouse's x coordinate, my is mouse's y coordinate
+    //cx and cy are center coordinates of particle, mx is mouse's x coordinate, my is mouse's y coordinate
     particle.drag(function(cx, cy, mx, my) {
         CX = particle.attr('cx');
         CY = particle.attr('cy');
@@ -207,29 +233,46 @@ function interval() {
            curPos = particlePath.getPointAtLength(counter); 
            counter += length(curPos.x, curPos.y, MX, MY)/6.0;
            curPos = particlePath.getPointAtLength(counter); 
-           particle.attr({cx: curPos.x, cy: curPos.y}); 
+           //don't let particle move outside of the container
+           if (curPos.x <= CONTAINER_WIDTH - PARTICLE_SIZE &&        // not too far right
+               curPos.y <= CONTAINER_HEIGHT - PARTICLE_SIZE &&       // and not too far down
+               curPos.x >= PARTICLE_SIZE &&            // and not too far left
+               curPos.y >= PARTICLE_SIZE)              // and not too far up
+           {
+           particle.attr({cx: curPos.x, cy: curPos.y}); }
            prevVelocityVector = paper.path("M" + curPos.x+ " " + curPos.y + "L"+ MX + " " + MY);
        }
        else {
-       curPos = particlePath.getPointAtLength(counter); 
-       particle.attr({cx: curPos.x, cy: curPos.y}); 
-       prevVelocityVector = paper.path("M" + curPos.x+ " " + curPos.y + "L"+ MX + " " + MY);
-       counter += length(curPos.x, curPos.y, MX, MY)/6.0;
+           curPos = particlePath.getPointAtLength(counter); 
+           //don't let particle move outside of the container
+           if (curPos.x <= CONTAINER_WIDTH - PARTICLE_SIZE &&        // not too far right
+               curPos.y <= CONTAINER_HEIGHT - PARTICLE_SIZE &&       // and not too far down
+               curPos.x >= PARTICLE_SIZE &&            // and not too far left
+               curPos.y >= PARTICLE_SIZE)              // and not too far up
+           {
+           particle.attr({cx: curPos.x, cy: curPos.y}); }
+           prevVelocityVector = paper.path("M" + curPos.x+ " " + curPos.y + "L"+ MX + " " + MY);
+           counter += length(curPos.x, curPos.y, MX, MY)/6.0;
        }
        velocityArrow = paper.path("M" + MX+ " " + MY+ "L" + ((MX - curPos.x)/5 + MX) + " " + ((MY - curPos.y)/5 +                      MY));
-       velocityArrow.attr({'arrow-end':'classic-wide-long'});
+       if (velocityArrow.getTotalLength() > 8){
+       velocityArrow.attr({'arrow-end':'classic-wide-long'});}
        vGroup = paper.set();
        vGroup.push(
        velocityArrow,
        prevVelocityVector
        );
+       //throws error if arrow on very short line https://github.com/DmitryBaranovskiy/raphael/issues/648 (raphael bug)
+       //after testing, 8 is minimum length
+       if (length(MX, MY, curPos.x, curPos.y)< 8){
+           vGroup.attr({'opacity': '0'});}
        vGroup.attr({stroke:"green", 'stroke-width': 3});
        //don't show large arrow with tiny acceleration vector 
-       if (length(curPos.x, curPos.y, (curPos.x/0.8 - MX/4), (curPos.y/0.8 - MY/4)) < 5) {
-           prevAccelerationVector = paper.path("M" + curPos.x+ " " + curPos.y + "L"+ (curPos.x/0.8 - MX/4) + " " +  
-           (curPos.y/0.8 - MY/4));
+       if (length(curPos.x, curPos.y, (curPos.x/0.8 - MX/4), (curPos.y/0.8 - MY/4)) < 8) {
+           prevAccelerationVector = paper.path("M" + 1+ " " + 1+ "L"+ 100 + " " +  
+           100);
            prevAccelerationVector.attr({'opacity': '0'});
-           accelerationArrow = paper.path("M" + (curPos.x/0.8 - MX/4) + " " + (curPos.y/0.8 - MY/4)+ "L" + ((curPos.x - MX)/5 +            (curPos.x/0.8 - MX/4)) + " " + ((curPos.y - MY)/5 +(curPos.y/0.8 - MY/4)));
+           accelerationArrow = paper.path("M" + 98 + " " + 98+ "L" + 100 + " " + 100);
            accelerationArrow.attr({'opacity': '0'}); }
        else {if ((curPos.x + MX-prevMX) == curPos.x){
            prevAccelerationVector = paper.path("M" + curPos.x+ " " + curPos.y + "L"+ (curPos.x/0.8 - MX/4) + " " +  
@@ -240,8 +283,9 @@ function interval() {
            prevAccelerationVector = paper.path("M" + curPos.x+ " " + curPos.y + "L"+ (curPos.x + MX-prevMX) + " " +                        (curPos.y + MY-prevMY));
            accelerationArrow = paper.path("M" + (curPos.x + MX-prevMX)+ " " + (curPos.y + MY-prevMY)+ "L" + (((curPos.x + MX-              prevMX) - curPos.x) + (curPos.x + MX-prevMX)) + " " + (((curPos.y + MY-prevMY) - curPos.y) +(curPos.y + MY-                    prevMY)));
        }
-            }
-        accelerationArrow.attr({stroke:'black', 'stroke-width': 3, 'arrow-end':'classic-wide-long'});
+       }
+        if (accelerationArrow.getTotalLength() > 8){
+        accelerationArrow.attr({stroke:'black', 'stroke-width': 3, 'arrow-end':'classic-wide-long'});}
         aGroup = paper.set();
         aGroup.push(
             accelerationArrow,
@@ -257,7 +301,6 @@ function interval() {
      dragAnimation = null;
    }
 };
-
 
 //simple harmonic motion velocity vector
 function setHarmonicVelocityVector(curPos, counter, direction, k) {
@@ -469,10 +512,10 @@ function harmonicPosition(x) {
     return -(hDist/2) * Math.sin(Math.sqrt(kConstant/mass)*(x))/(10*Math.sqrt(kConstant));
 }
 function harmonicVelocity(x) {
-    return ((2*Math.sqrt(kConstant/mass)*(hDist/2)*Math.cos(Math.sqrt(kConstant/mass)*(10*x +                                       (Math.PI/2)/(Math.sqrt(kConstant/mass)))))/(10*Math.sqrt(kConstant)));
+    return ((2*Math.sqrt(kConstant/mass)*(hDist/2)*Math.cos(Math.sqrt(kConstant/mass)*(20*x +                                       (Math.PI/2)/(Math.sqrt(kConstant/mass)))))/(10*Math.sqrt(kConstant)));
 }
 function harmonicAcceleration(x) {
-    return ((kConstant*2/mass)*harmonicPosition(10*x + (Math.PI/2)/(Math.sqrt(kConstant/mass))));
+    return ((kConstant*2/mass)*harmonicPosition(20*x + (Math.PI/2)/(Math.sqrt(kConstant/mass))));
 }
 
 //for linear motion simulation
@@ -538,7 +581,7 @@ function drawLinear(ctr, totalLength) {
 }
 
 function functionGraphHarmonic (ctx,axes,func,color,thick, scaling) {
-    var xx, yy, dx=4, x0=axes.x0, y0=axes.y0, scale=axes.scale;
+    var xx, yy, dx=2, x0=axes.x0, y0=axes.y0, scale=axes.scale;
     //time full period of harmonic motion takes
     var iMax = 2*Math.PI*scaling/(Math.sqrt(kConstant/mass));
     var iMin = 0;
@@ -554,7 +597,7 @@ function functionGraphHarmonic (ctx,axes,func,color,thick, scaling) {
     }
 
 function functionGraphLinear (ctx,axes,func,color,thick, scaling) {
-    var xx, yy, dx=4, x0=axes.x0, y0=axes.y0, scale=axes.scale;
+    var xx, yy, dx=2, x0=axes.x0, y0=axes.y0, scale=axes.scale;
     if (!(flag)) {
          //time half of period of this linear motion takes 
          var iMax = 2*scaling*Math.sqrt(hDist)/Math.sqrt(Math.abs(aMagnitude));
@@ -596,13 +639,9 @@ function showAxes(ctx,axes) {
     ctx.moveTo(xmin,y0); ctx.lineTo(w,y0);  // X axis
     ctx.moveTo(x0,0);    ctx.lineTo(x0,h);  // Y axis
     ctx.stroke();
-    ctx.font = "30px Arial";
+    ctx.font = "15px Arial";
     ctx.fillStyle = "black";
-    ctx.fillText("Time",ctx.canvas.width-70,ctx.canvas.height/2 + 40);
-    ctx.fillStyle = "green";
-    ctx.fillText("Velocity",525,30);
-    ctx.fillStyle = "blue";
-    ctx.fillText("Acceleration",525,70);
+    ctx.fillText("Time",ctx.canvas.width-35,ctx.canvas.height/2 + 20);
 }
 
 
@@ -618,14 +657,20 @@ $(document).ready(function() {
           $('#legendV').empty();
           $('#legendA').empty();
           $('.maybeAppear').css("opacity", "1");
+          drawLegend(velocityLegend, accelerationLegend);
         }
         else {
           $('#legendV').empty();
           $('#legendA').empty();
-          $('#legendV').append("<p> <font color = green> Velocity </font> </p>");
-          $('#legendA').append("<p> <font color = blue> Acceleration </font> </p>");
+          $('#legendV').append("<p> <font color = green> Velocity </font> <b id = velocityLegendDrag> </b> </p>");
+          //add velocity legend arrow for drag
+          velocityLegendDrag = Raphael("velocityLegendDrag", LEGEND_WIDTH, LEGEND_HEIGHT);
+          $('#legendA').append("<p> <font color = blue> Acceleration </font> <b id = accelerationLegendDrag> </b> </p>");
+          //add acceleration legend arrow for drag
+          accelerationLegendDrag = Raphael("accelerationLegendDrag", LEGEND_WIDTH, LEGEND_HEIGHT);
           $('.maybeAppear').css("opacity", "0");
           animateDrag(); 
+          drawLegend(velocityLegendDrag, accelerationLegendDrag);
         }          
     });
     
@@ -643,14 +688,14 @@ $(document).ready(function() {
                 particle.remove();
                 circlePath.remove();}
             var input = $('<input></input>');
-            var button = $('<button class=enter>Enter</button>');
-            $('#extraOptions').append("<div class= autoInput style= padding-top:20px>")
-                              .append("Radius:")
+            var button = $('<button class=enter>Start</button>');
+            $('#extraOptions').append("<div class= autoInput style= padding-top:5px>")
+                              .append("Radius (between 20 and 200):")
                               .append("<div>")
                               .append(input)
                               .append(button)
                               .append("</div></div>");
-
+           drawLegend(velocityLegend, accelerationLegend);
           //get user input for radius of the circle that the particle travels in (CLICK ENTER BUTTON)
           var enterButton = $('.enter');
                 enterButton.on('click', function(event) {
@@ -659,6 +704,7 @@ $(document).ready(function() {
                 centripetalMotion((CONTAINER_WIDTH/2), (CONTAINER_HEIGHT/2), radius, "red");
                 //make the circle move continuously by calling function every 20ms 
                 circleAnimation = window.setInterval("animateCentripetal()", 20); 
+                drawLegend(velocityLegend, accelerationLegend);
             });
             
            //get user input for radius of the circle that the particle travels in (PRESS ENTER KEY)
@@ -669,19 +715,22 @@ $(document).ready(function() {
                 centripetalMotion((CONTAINER_WIDTH/2), (CONTAINER_HEIGHT/2), radius, "red");
                 //make the circle move continuously by calling function every 20ms 
                 circleAnimation = window.setInterval("animateCentripetal()", 20); 
+                drawLegend(velocityLegend, accelerationLegend);
             }
           });
         }
         else if (name == "harmonic") {
             refresh();
-            var button = $('<button class=enter>Enter</button>');
+            var button = $('<button class=enter>Start</button>');
             var input = $('<input></input>');
-            $('#extraOptions').append("<div class= autoInput style= padding-top:20px>")
+            $('#extraOptions').append("<div class= autoInput style= padding-top:5px>")
                               .append("k (between 0.75 and 30): ")
                               .append("<div>")
                               .append(input)
                               .append(button)
                               .append("</div></div>");
+            drawLegend(velocityLegend, accelerationLegend);
+            $('#graph').css("right", "-80px");
 
            //get user input for k (PRESS ENTER KEY)
            input.on('keyup', function(evt) {
@@ -691,6 +740,7 @@ $(document).ready(function() {
                  //demonstrate simple harmonic motion
                  setup();
                  animateHarmonic(k);
+                 drawLegend(velocityLegend, accelerationLegend);
              }
            });
             
@@ -702,18 +752,21 @@ $(document).ready(function() {
                 //demonstrate simple harmonic motion
                 setup();
                 animateHarmonic(k);
+                drawLegend(velocityLegend, accelerationLegend);
             });
         }
         else {   
             refresh();
             var input = $('<input></input>');
-            var button = $('<button class=enter>Enter</button>');
-            $('#extraOptions').append("<div class= autoInput style= padding-top:20px>")
-                              .append("Acceleration (between 0 and +4): ")
+            var button = $('<button class=enter>Start</button>');
+            $('#extraOptions').append("<div class= autoInput style= padding-top:5px>")
+                              .append("Acceleration (between 0.5 and 3.5): ")
                               .append("<div>")
                               .append(input)
                               .append(button)
                               .append("</div></div>");
+            drawLegend(velocityLegend, accelerationLegend);
+            $('#graph').css("right", "-45px");
 
             //get user input for acceleration magnitude (PRESS ENTER KEY)
            input.on('keyup', function(evt) {
@@ -723,6 +776,7 @@ $(document).ready(function() {
                  setup();
                 //demonstrate simple linear motion
                 animateLinear(a);
+                drawLegend(velocityLegend, accelerationLegend);
              }
            });
             
@@ -734,6 +788,7 @@ $(document).ready(function() {
                 setup();
                 //demonstrate simple linear motion
                 animateLinear(a);
+                drawLegend(velocityLegend, accelerationLegend);
             });
         }
                
@@ -745,5 +800,9 @@ $(document).ready(function() {
             fill: "red",
             stroke: "none"
         };
+    //add velocity legend arrow for auto
+    velocityLegend = Raphael("velocityLegend", LEGEND_WIDTH, LEGEND_HEIGHT);
+    //add acceleration legend arrow for autro
+    accelerationLegend = Raphael("accelerationLegend", LEGEND_WIDTH, LEGEND_HEIGHT);
     
 });
